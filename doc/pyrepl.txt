@@ -3,20 +3,18 @@
 ==============================================================================
 INTRODUCTION                                                    *pyrepl*
 
-pyrepl.nvim is a Python REPL inside Neovim powered by Jupyter kernels. It opens
-`jupyter-console` in a neovim terminal split and provides commands to send
-code from your buffer to the selected kernel.
+pyrepl.nvim is a Python REPL inside Neovim powered by Jupyter console.
 
 Features `pyrepl.nvim` currently provides:
-- Convert notebook files from and to python with `jupytext`;
-- Install all runtime deps required with a command (no need to install kernel globally with default settings);
-- Start `jupyter-console` in neovim terminal;
-- Prompt the user to choose jupyter kernel on REPL start;
+- Convert notebook files from and to Python with `jupytext`;
+- Install all Jupyter deps required with a Neovim command;
+- Start `jupyter-console` in Neovim built-in terminal;
+- Prompt the user to choose a Jupyter kernel on REPL start;
 - Send code to the REPL from current buffer;
 - Automatically display output images;
 - Neovim theme integration for `jupyter-console`;
 - Jupytext cell navigation;
-- Toggle focus to REPL in active terminal mode.
+- Toggle focus to REPL window in active terminal mode.
 
 ------------------------------------------------------------------------------
 QUICKSTART                                                      *pyrepl-quickstart*
@@ -33,12 +31,13 @@ Minimal lazy.nvim setup with the default config and example keymaps:
       pyrepl.setup({
         split_horizontal = false,
         split_ratio = 0.5,
+        style = "default",
         style_treesitter = true,
         image_max_history = 10,
         image_width_ratio = 0.5,
         image_height_ratio = 0.5,
         -- built-in provider, works best for ghostty and kitty
-        -- for other terminals use "image" instead of "placeholders"
+        -- for other terminals use "image" provider
         image_provider = "placeholders",
         cell_pattern = "^# %%%%.*$",
         python_path = "python",
@@ -67,7 +66,7 @@ Minimal lazy.nvim setup with the default config and example keymaps:
   }
 <
 
-Then install pyrepl runtime packages with `uv` or `pip` directly from Neovim:
+Then install REPL runtime packages with `uv` or `pip` directly from Neovim:
 >
   :PyreplInstall pip
   :PyreplInstall uv
@@ -76,7 +75,8 @@ Then install pyrepl runtime packages with `uv` or `pip` directly from Neovim:
 ==============================================================================
 REQUIREMENTS                                                   *pyrepl-reqs*
 
-- A working Python executable. By default pyrepl.nvim uses `python` from PATH.
+- A working Python executable. By default pyrepl.nvim uses `python`
+  executable from PATH.
   You can override it with `python_path` (see |pyrepl-config|).
 - The selected Python interpreter must have these packages:
   - pynvim
@@ -90,14 +90,6 @@ REQUIREMENTS                                                   *pyrepl-reqs*
   python3 -m pip install ipykernel
   python3 -m ipykernel install --user --name python3
 <
-
-==============================================================================
-KNOWN LIMITATIONS                                               *pyrepl-limitations*
-
-- Only Python is officially supported and will be prioritized. For R, see
-  https://github.com/R-nvim/R.nvim
-- Persistence in kernel outputs is not possible right now. Implementing cell
-  logic like `molten.nvim` will complicate current approach
 
 ==============================================================================
 COMMANDS                                                        *pyrepl-commands*
@@ -118,7 +110,7 @@ COMMANDS                                                        *pyrepl-commands
     Close the REPL and shut down the kernel.
 
 :PyreplToggleFocus                                              *PyreplToggleFocus*
-    Toggle open REPL terminal in insert mode.
+    Focus the REPL in terminal mode, or switch back to the previous window.
 
 :PyreplSendVisual                                               *PyreplSendVisual*
     Change mode to normal and send last visual selection to REPL.
@@ -147,7 +139,7 @@ COMMANDS                                                        *pyrepl-commands
     Helpful only when `config.jupytext_hook` is `false`.
 
 :PyreplInstall {tool}                                           *PyreplInstall*
-    Install pyrepl runtime packages into the configured Python interpreter.
+    Install REPL runtime packages into the configured Python interpreter.
     Supported tools:
       - pip: `<python_path> -m pip install <packages>`
       - uv:  `uv pip install -p <python_path> <packages>`
@@ -170,7 +162,8 @@ require("pyrepl").close_repl()                                  *pyrepl.close_re
     Same as |PyreplClose|. Closes the REPL and shuts down the kernel.
 
 require("pyrepl").toggle_repl_focus()                           *pyrepl.toggle_repl_focus*
-    Same as |PyreplFocus|. Toggle open REPL terminal in insert mode.
+    Same as |PyreplToggleFocus|. Focus the REPL in terminal mode, or switch
+    back to the previous window.
 
 require("pyrepl").send_cell()                                   *pyrepl.send_cell*
     Same as |PyreplSendCell|. Sends the cell around the cursor.
@@ -209,6 +202,7 @@ Default configuration:
   require("pyrepl").setup({
     split_horizontal = false,
     split_ratio = 0.5,
+    style = "default",
     style_treesitter = true,
     image_max_history = 10,
     image_width_ratio = 0.5,
@@ -267,7 +261,8 @@ Image display ~
 Use `placeholders` provider for ghostty (https://github.com/ghostty-org/ghostty) and kitty (https://github.com/kovidgoyal/kitty) terminals.
 This allows image display in hard cases (for example, when nvim started in nested `ssh`, `tmux` and `docker`).
 
-For other terminals change provider to `image` - [image.nvim](https://github.com/3rd/image.nvim) will be used to display images.
+For other terminals change provider to `image` -
+https://github.com/3rd/image.nvim will be used to display images.
 For example, to display images in terminal with `sixel` protocol support:
 >
   {
@@ -292,25 +287,26 @@ For example, to display images in terminal with `sixel` protocol support:
 
 Use a dedicated Python environment for runtime packages ~
 
-By default pyrepl.nvim uses `python` (`python_path = "python"`) interpreter.
-If Neovim is started inside a venv, that venv is usually used.
+By default pyrepl.nvim uses `python` executable (`python_path = "python"`).
+If Neovim is started inside a venv, that venv will be used.
 
-But you can install all required packages once in a dedicated python interpreter and set `python_path`
-(or set `python_path = nil` and `vim.g.python3_host_prog` will be used as fallback).
-
-Example:
+You can also install all required packages once in a dedicated Python
+interpreter and then point to it via `python_path`:
 >
   uv venv ~/.venv_nvim
   source ~/.venv_nvim/bin/activate
   uv pip install pynvim jupyter-console ipykernel
   uv pip install pillow cairosvg # optional, for jpg and svg support
+<
 
+Then, in `init.lua`:
+>
   require("pyrepl").setup({
     python_path = "~/.venv_nvim/bin/python",
   })
 <
 
-To use kernel in that case, you need to install it globally:
+To use an arbitrary kernel in that case, you need to install it globally:
 >
   # from kernel virtual environment
   python -m ipykernel install --user --name {kernel_name}
@@ -327,7 +323,7 @@ built-in Pygments theme:
   })
 <
 
-Send cell and move to the next one ~
+Send cell and move forward ~
 
 Combine `send` and `step` commands:
 >

@@ -1,6 +1,6 @@
 # pyrepl.nvim
 
-pyrepl.nvim is a Python REPL inside Neovim powered by Jupyter kernels. It opens `jupyter-console` in a terminal split and provides commands to send code from your buffer to the selected kernel.
+Python REPL inside Neovim powered by Jupyter console!
 
 <img width="1624" height="971" alt="preview" src="https://github.com/user-attachments/assets/f126b07a-20ac-4fa4-9b58-815ac8fb6230" />
 
@@ -19,12 +19,13 @@ Minimal lazy.nvim setup with the default config and example keymaps:
     pyrepl.setup({
       split_horizontal = false,
       split_ratio = 0.5,
+      style = "default",
       style_treesitter = true,
       image_max_history = 10,
       image_width_ratio = 0.5,
       image_height_ratio = 0.5,
       -- built-in provider, works best for ghostty and kitty
-      -- for other terminals use "image" instead of "placeholders"
+      -- for other terminals use "image" provider
       image_provider = "placeholders",
       cell_pattern = "^# %%%%.*$",
       python_path = "python",
@@ -53,7 +54,7 @@ Minimal lazy.nvim setup with the default config and example keymaps:
 }
 ```
 
-Then install pyrepl runtime packages with `uv` or `pip` directly from Neovim:
+Then install REPL runtime packages with `uv` or `pip` directly from Neovim:
 
 ```vim
 :PyreplInstall pip
@@ -84,14 +85,14 @@ This plugin aims to provide a sensible workflow to work with Python REPL.
 Features `pyrepl.nvim` currently provides:
 
 - Convert notebook files from and to python with `jupytext`;
-- Install all runtime deps required with a command (no need to install kernel globally with default settings);
-- Start `jupyter-console` in neovim terminal;
-- Prompt the user to choose jupyter kernel on REPL start;
+- Install all Jupyter deps required with a Neovim command;
+- Start `jupyter-console` in Neovim built-in terminal;
+- Prompt the user to choose Jupyter kernel on REPL start;
 - Send code to the REPL from current buffer;
 - Automatically display output images;
 - Neovim theme integration for `jupyter-console`;
 - Jupytext cell navigation;
-- Toggle focus to REPL in active terminal mode.
+- Toggle focus to REPL window in active terminal mode.
 
 ## Tips & Tricks
 
@@ -122,13 +123,10 @@ For example, to display images in terminal with `sixel` protocol support:
 
 ### Use a dedicated Python environment for runtime packages
 
-By default pyrepl.nvim uses `python` (`python_path = "python"`).
-If Neovim is started inside a venv, that venv is usually used.
+By default pyrepl.nvim uses `python` executable (`python_path = "python"`).
+If Neovim is started inside a venv, that venv will be used.
 
-But you can install all required packages once in a dedicated python interpreter and set `python_path`
-(or set `python_path = nil` and `vim.g.python3_host_prog` will be used as fallback).
-
-Example:
+You can also install all required packages once in a dedicated python interpreter and then point to it via `python_path`:
 
 ```bash
 uv venv ~/.venv_nvim
@@ -161,7 +159,7 @@ require("pyrepl").setup({
 })
 ```
 
-### Send cell and move to the next one
+### Send cell and move forward
 
 Combine `send` and `step` commands:
 
@@ -171,11 +169,6 @@ vim.keymap.set("n", "<leader>jl", function()
   vim.cmd("PyreplStepCellForward")
 end)
 ```
-
-## Known Limitations
-
-- Only Python is officially supported and will be prioritized. For R, see https://github.com/R-nvim/R.nvim;
-- Persistence in kernel outputs is not possible right now. Implementing cell logic like `molten.nvim` will complicate current approach.
 
 ## Commands and API
 
