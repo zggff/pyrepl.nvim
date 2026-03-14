@@ -144,6 +144,19 @@ function M.setup(opts)
         M.install_packages(o.args)
     end, { nargs = 1, complete = python.get_tools })
 
+    -- define default highlight groups
+    local hl_links = {
+        PyreplImageBorder = "FloatBorder",
+        PyreplImageTitle = "FloatTitle",
+        PyreplImageNormal = "NormalFloat",
+    }
+
+    for name, link in pairs(hl_links) do
+        if vim.tbl_isempty(vim.api.nvim_get_hl(0, { name = name })) then
+            vim.api.nvim_set_hl(0, name, { link = link })
+        end
+    end
+
     -- setup jupytext hook
     if config.get_state().jupytext_hook and vim.fn.executable("jupytext") == 1 then
         vim.api.nvim_clear_autocmds({

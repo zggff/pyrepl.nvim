@@ -41,26 +41,8 @@ local function open_image_win(buf)
     }
 
     local win = vim.api.nvim_open_win(buf, false, opts)
-
-    local border_hl = "PyreplImageBorder"
-    local title_hl = "PyreplImageTitle"
-    local normal_hl = "PyreplImageNormal"
-
-    if vim.tbl_isempty(vim.api.nvim_get_hl(0, { name = border_hl })) then
-        vim.api.nvim_set_hl(0, border_hl, { link = "FloatBorder" })
-    end
-
-    if vim.tbl_isempty(vim.api.nvim_get_hl(0, { name = title_hl })) then
-        vim.api.nvim_set_hl(0, title_hl, { link = "FloatTitle" })
-    end
-
-    if vim.tbl_isempty(vim.api.nvim_get_hl(0, { name = normal_hl })) then
-        vim.api.nvim_set_hl(0, normal_hl, { link = "NormalFloat" })
-    end
-
-    local winhl =
-        string.format("NormalFloat:%s,FloatBorder:%s,FloatTitle:%s", normal_hl, border_hl, title_hl)
-    vim.wo[win].winhl = winhl
+    vim.wo[win].winhl =
+        "NormalFloat:PyreplImageNormal,FloatBorder:PyreplImageBorder,FloatTitle:PyreplImageBorder"
 
     return win
 end
