@@ -106,12 +106,12 @@ local function is_tmux()
         return tmux_detected
     end
 
-    if vim.env.TMUX and vim.env.TMUX ~= "" then
+    if vim.env.TMUX or vim.env.TERM == "tmux-256color" then
         tmux_detected = true
-        return tmux_detected
+    else
+        tmux_detected = detect_tmux(150)
     end
 
-    tmux_detected = detect_tmux(150)
     return tmux_detected
 end
 
