@@ -10,7 +10,7 @@
 ---@field image_width_ratio number
 ---@field image_height_ratio number
 ---@field image_provider string
----@field cell_pattern string
+---@field cell_pattern string|fun(): string
 ---@field python_path string|nil
 ---@field preferred_kernel string|nil
 ---@field jupytext_hook boolean
@@ -25,7 +25,7 @@
 ---@field image_width_ratio? number
 ---@field image_height_ratio? number
 ---@field image_provider? "placeholders" | "image" | string
----@field cell_pattern? string
+---@field cell_pattern? string|fun(): string
 ---@field python_path? string
 ---@field preferred_kernel? string
 ---@field jupytext_hook? boolean
