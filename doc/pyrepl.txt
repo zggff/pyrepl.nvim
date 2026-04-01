@@ -19,11 +19,8 @@ Features `pyrepl.nvim` currently provides:
 ------------------------------------------------------------------------------
 REQUIREMENTS                                                   *pyrepl-reqs*
 
-- Python 3.12+
 - Neovim 0.11+
-- Optional Python packages:
-  - cairosvg (for displaying SVG images)
-  - pillow (for displaying JPG images)
+- Python 3.10+
 
 ------------------------------------------------------------------------------
 QUICKSTART                                                      *pyrepl-quickstart*
@@ -45,6 +42,7 @@ Minimal `vim.pack` setup with the default config and example keymaps:
     split_horizontal = false,
     split_ratio = 0.5,
     style = "default",
+    -- generate jupyter-console theme from neovim theme
     style_integration = true,
     image_max_history = 10,
     image_width_ratio = 0.5,
@@ -52,6 +50,7 @@ Minimal `vim.pack` setup with the default config and example keymaps:
     -- built-in provider, works best for ghostty and kitty
     -- for other terminals use "image" provider
     image_provider = "placeholders",
+    -- can also be a function for advanced use cases
     cell_pattern = "^# %%%%.*$",
     python_path = "python",
     preferred_kernel = "python3",
