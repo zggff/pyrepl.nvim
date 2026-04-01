@@ -94,7 +94,6 @@ local function open_new_repl(kernel)
 
     local python_path = python.get_python_path()
     local console_path = python.get_console_path()
-    local nvim_socket = vim.v.servername
     local style = config.get_state().style
     local style_integration = config.get_state().style_integration
 
@@ -134,13 +133,9 @@ local function open_new_repl(kernel)
         chan = vim.fn.jobstart(cmd, {
             term = true,
             pty = true,
-            env = vim.tbl_extend(
-                "force",
-                vim.env,
-                { NVIM = nvim_socket, PYDEVD_DISABLE_FILE_VALIDATION = 1 }
-            ),
+            env = { PYDEVD_DISABLE_FILE_VALIDATION = 1 },
             on_exit = function()
-                vim.defer_fn(M.close_repl, 200)
+                vim.defer_fn(M.close_repl, 100)
             end,
         })
     end)

@@ -61,8 +61,7 @@ local function list_kernels()
     local cmd = {
         M.get_python_path(),
         "-m",
-        "jupyter",
-        "kernelspec",
+        "jupyter_client.kernelspecapp",
         "list",
         "--json",
     }
