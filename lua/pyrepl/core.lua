@@ -96,7 +96,7 @@ local function open_new_repl(kernel)
     local console_path = python.get_console_path()
     local nvim_socket = vim.v.servername
     local style = config.get_state().style
-    local style_treesitter = config.get_state().style_treesitter
+    local style_integration = config.get_state().style_integration
 
     local buf = vim.api.nvim_create_buf(false, true)
     local win = open_scratch_win(buf)
@@ -113,11 +113,18 @@ local function open_new_repl(kernel)
         vim.o.termguicolors and "True" or "False",
     }
 
-    if style_treesitter then
-        local overrides = theme.build_pygments_theme()
-        if overrides then
+    if style_integration then
+        local pygments_overrides = theme.build_pygments_theme()
+        local prompt_toolkit_overrides = theme.build_prompt_toolkit_theme()
+
+        if pygments_overrides then
             cmd[#cmd + 1] = "--ZMQTerminalInteractiveShell.highlighting_style_overrides"
-            cmd[#cmd + 1] = overrides
+            cmd[#cmd + 1] = pygments_overrides
+        end
+
+        if prompt_toolkit_overrides then
+            cmd[#cmd + 1] = "--prompt-toolkit-overrides"
+            cmd[#cmd + 1] = prompt_toolkit_overrides
         end
     end
 

@@ -24,7 +24,7 @@ pyrepl.setup({
   split_horizontal = false,
   split_ratio = 0.5,
   style = "default",
-  style_treesitter = true,
+  style_integration = true,
   image_max_history = 10,
   image_width_ratio = 0.5,
   image_height_ratio = 0.5,
@@ -150,11 +150,11 @@ python -m ipykernel install --user --name {kernel_name}
 
 ### Use a built-in Pygments style
 
-If you do not like the treesitter-based REPL colors, pick a built-in Pygments theme:
+If you do not want pyrepl.nvim to derive REPL colors from your Neovim theme, pick a built-in Pygments style instead:
 
 ```lua
 require("pyrepl").setup({
-  style_treesitter = false,
+  style_integration = false,
   style = "default", -- or another Pygments style, e.g. "gruvbox-dark"
 })
 ```

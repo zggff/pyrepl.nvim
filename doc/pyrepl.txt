@@ -36,7 +36,7 @@ Minimal `vim.pack` setup with the default config and example keymaps:
     split_horizontal = false,
     split_ratio = 0.5,
     style = "default",
-    style_treesitter = true,
+    style_integration = true,
     image_max_history = 10,
     image_width_ratio = 0.5,
     image_height_ratio = 0.5,
@@ -206,7 +206,7 @@ Default configuration:
     split_horizontal = false,
     split_ratio = 0.5,
     style = "default",
-    style_treesitter = true,
+    style_integration = true,
     image_max_history = 10,
     image_width_ratio = 0.5,
     image_height_ratio = 0.5,
@@ -225,10 +225,10 @@ Options:
       Fraction of screen used by the REPL split. Default: 0.5.
   style (string)
       Pygments style name used by jupyter-console. Default: "default".
-      Used directly when `style_treesitter` is false.
-  style_treesitter (boolean)
-      Derive Pygments style overrides from current Neovim/Tree-sitter
-      highlight groups for REPL output. Default: true.
+      Used directly when `style_integration` is false.
+  style_integration (boolean)
+      Derive Pygments and prompt-toolkit style overrides from current
+      Neovim highlight groups for the REPL. Default: true.
       Set to false to use built-in Pygments styles from `style`.
   image_max_history (integer)
       Maximum number of images kept in history. Default: 10. Minimum: 2.
@@ -325,11 +325,11 @@ To use an arbitrary kernel in that case, you need to install it globally:
 
 Use a built-in Pygments style ~
 
-If you do not like the treesitter-based REPL colors, disable it and pick a
-built-in Pygments theme:
+If you do not want pyrepl.nvim to derive REPL colors from your Neovim
+highlights, disable the integration and pick a built-in Pygments theme:
 >
   require("pyrepl").setup({
-    style_treesitter = false,
+    style_integration = false,
     style = "default", -- or another Pygments style, e.g. "gruvbox-dark"
   })
 <

@@ -1,7 +1,8 @@
 import base64
 import io
+import json
 import os
-import sys
+from argparse import ArgumentParser
 from enum import StrEnum
 from queue import Queue
 from threading import Event, Thread
@@ -9,6 +10,7 @@ from typing import Any
 
 import pynvim
 from jupyter_console.app import ZMQTerminalIPythonApp
+from prompt_toolkit.styles import defaults as ptk_defaults
 from traitlets.config import Config
 
 
@@ -64,7 +66,6 @@ def convert_image_to_png_base64(
             raw = image_data.encode("utf-8")
             png_bytes = cairosvg.svg2png(bytestring=raw)
             return base64.b64encode(png_bytes).decode("utf-8")
-
         except Exception:
             return None
 
@@ -153,9 +154,17 @@ def main() -> None:
     config = Config()
     config.ZMQTerminalInteractiveShell.image_handler = "callable"
     config.ZMQTerminalInteractiveShell.callable_image_handler = image_handler
-
     app = ZMQTerminalIPythonApp.instance(config=config)
-    app.initialize(sys.argv[1:])
+
+    parser = ArgumentParser("Pyrepl console.")
+    parser.add_argument("--prompt-toolkit-overrides", type=str, default=None)
+    known, args = parser.parse_known_args()
+    app.initialize(args)
+
+    if known.prompt_toolkit_overrides is not None:
+        overrides = dict(ptk_defaults.PROMPT_TOOLKIT_STYLE)
+        overrides.update(json.loads(known.prompt_toolkit_overrides))
+        ptk_defaults.PROMPT_TOOLKIT_STYLE[:] = list(overrides.items())
 
     thread.start()
     app.start()  # type: ignore

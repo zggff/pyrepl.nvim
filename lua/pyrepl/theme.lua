@@ -56,31 +56,54 @@ local pygments_hl_map = {
     ["('OutPromptNum',)"] = { "@number", "Number" },
 }
 
----@param hl_name string
+local prompt_toolkit_hl_map = {
+    ["readline-like-completions"] = "Pmenu",
+    ["matching-bracket.other"] = "MatchParen",
+    ["matching-bracket.cursor"] = "Cursor",
+
+    ["completion-menu"] = "Pmenu",
+    ["completion-menu.completion"] = "Pmenu",
+    ["completion-menu.completion.current"] = "PmenuSel",
+    ["completion-menu.meta.completion"] = "PmenuExtra",
+    ["completion-menu.meta.completion.current"] = "PmenuExtraSel",
+    ["completion-menu.multi-column-meta"] = "PmenuExtra",
+
+    ["completion-toolbar"] = "Pmenu",
+    ["completion-toolbar.completion.current"] = "PmenuSel",
+}
+
+---@param hl string
 ---@return string|nil
-local function style_from_hl(hl_name)
-    local hl = vim.api.nvim_get_hl(0, {
-        name = hl_name,
+local function pygments_style_from_hl(hl)
+    local parts = {}
+    local style = vim.api.nvim_get_hl(0, {
+        name = hl,
         link = false,
     })
 
-    if type(hl.fg) ~= "number" then
-        return
+    if style.fg then
+        parts[#parts + 1] = string.format("fg:#%06x", style.fg)
     end
 
-    return string.format("'#%06x'", hl.fg)
+    if style.bg then
+        parts[#parts + 1] = string.format("bg:#%06x", style.bg)
+    end
+
+    if #parts > 0 then
+        return table.concat(parts, " ")
+    end
 end
 
 ---@return string|nil
 function M.build_pygments_theme()
     local theme = {}
 
-    for pygments, hls in pairs(pygments_hl_map) do
+    for pygments_hls, hls in pairs(pygments_hl_map) do
         -- obtain style from candidates
         for _, hl in ipairs(hls) do
-            local color = style_from_hl(hl)
-            if color then
-                theme[#theme + 1] = string.format("%s: %s", pygments, color)
+            local style = pygments_style_from_hl(hl)
+            if style then
+                theme[#theme + 1] = string.format("%s: '%s'", pygments_hls, style)
                 break
             end
         end
@@ -92,6 +115,23 @@ function M.build_pygments_theme()
 
     -- return python dictionary with color overrides
     return "{" .. table.concat(theme, ", ") .. "}"
+end
+
+function M.build_prompt_toolkit_theme()
+    local theme = {}
+
+    for prompt_toolkit_hl, hl in pairs(prompt_toolkit_hl_map) do
+        local style = pygments_style_from_hl(hl)
+        if style then
+            theme[prompt_toolkit_hl] = style
+        end
+    end
+
+    if vim.tbl_isempty(theme) then
+        return nil
+    end
+
+    return vim.json.encode(theme)
 end
 
 return M
