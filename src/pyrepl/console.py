@@ -3,7 +3,6 @@ import io
 import json
 import os
 from argparse import ArgumentParser
-from enum import StrEnum
 from queue import Queue
 from threading import Event, Thread
 from typing import Any
@@ -13,15 +12,13 @@ from jupyter_console.app import ZMQTerminalIPythonApp
 from prompt_toolkit.styles import defaults as ptk_defaults
 from traitlets.config import Config
 
-
-class ImageMimeTypes(StrEnum):
-    PNG = "image/png"
-    JPG = "image/jpeg"
-    SVG = "image/svg+xml"
+PNG = "image/png"
+JPG = "image/jpeg"
+SVG = "image/svg+xml"
 
 
 def log(msg: str):
-    print("[pyrepl]", msg)
+    return f"[pyrepl] {msg}"
 
 
 def normalize_payload(payload: Any) -> str | None:
@@ -41,9 +38,9 @@ def normalize_payload(payload: Any) -> str | None:
     return None
 
 
-def pick_image_payload(data: dict[str, Any]) -> tuple[ImageMimeTypes, str] | None:
+def pick_image_payload(data: dict[str, Any]) -> tuple[str, str] | None:
     """Pick first supported image payload in preferred order."""
-    for image_mime in (ImageMimeTypes.PNG, ImageMimeTypes.JPG, ImageMimeTypes.SVG):
+    for image_mime in (PNG, JPG, SVG):
         payload = normalize_payload(data.get(image_mime))
         if payload:
             return image_mime, payload
@@ -51,15 +48,12 @@ def pick_image_payload(data: dict[str, Any]) -> tuple[ImageMimeTypes, str] | Non
     return None
 
 
-def convert_image_to_png_base64(
-    image_mime: ImageMimeTypes,
-    image_data: str,
-) -> str | None:
+def convert_image_to_png_base64(image_mime: str, image_data: str) -> str | None:
     """Convert supported image payloads to base64-encoded PNG."""
-    if image_mime == ImageMimeTypes.PNG:
+    if image_mime == PNG:
         return image_data
 
-    if image_mime == ImageMimeTypes.SVG:
+    if image_mime == SVG:
         try:
             import cairosvg
 
@@ -69,7 +63,7 @@ def convert_image_to_png_base64(
         except Exception:
             return None
 
-    if image_mime == ImageMimeTypes.JPG:
+    if image_mime == JPG:
         try:
             from PIL import Image
 
@@ -88,57 +82,43 @@ def convert_image_to_png_base64(
 def image_pipeline(data: Any):
     """Handle Jupyter image output and forward it to Neovim."""
     if not isinstance(data, dict):
-        return
+        return None
 
     selected = pick_image_payload(data)
-    if not selected:
-        return
+    if selected is None:
+        return None
     image_mime, image_data = selected
 
-    prepared = convert_image_to_png_base64(image_mime, image_data)
-    if not prepared:
-        return
-
-    return prepared
+    return convert_image_to_png_base64(image_mime, image_data)
 
 
-def image_worker(queue: Queue, dead: Event):
+def image_worker(queue: Queue, dead: Event, nvim: pynvim.Nvim):
     """Main thread worker to handle image display in nvim."""
-    addr = os.environ.get("NVIM")
-    command = "require('pyrepl.image').console_endpoint(...)"
-    nvim = None
-
-    if addr is None:
-        dead.set()
-        log("image handling is not possible, socket unknown")
-        return
-
     try:
         while True:
             data = queue.get()
-            nvim = pynvim.attach("socket", path=addr) if nvim is None else nvim
 
             try:
-                nvim.exec_lua(command, data, async_=False)
+                nvim.exec_lua("require('pyrepl.image').console_endpoint(...)", data)
             except Exception as e:
-                log(f"failed to display image: {e}")
+                print(log(f"failed to display image: {e}"))
             finally:
                 queue.task_done()
 
     except Exception as e:
-        log(f"image worker is dead {e}")
+        print(log(f"image worker is dead {e}"))
         dead.set()
 
 
 def main() -> None:
     """Run the Jupyter console with pyrepl integration."""
+    path = os.environ.get("NVIM")
+    assert path is not None
+
+    nvim = pynvim.attach("socket", path=path)
     queue = Queue()
     dead = Event()
-    thread = Thread(
-        target=image_worker,
-        args=(queue, dead),
-        daemon=True,
-    )
+    thread = Thread(target=image_worker, args=(queue, dead, nvim), daemon=True)
 
     def image_handler(data):
         if dead.is_set():
@@ -159,15 +139,20 @@ def main() -> None:
     parser = ArgumentParser("Pyrepl console.")
     parser.add_argument("--prompt-toolkit-overrides", type=str, default=None)
     known, args = parser.parse_known_args()
-    app.initialize(args)
 
-    if known.prompt_toolkit_overrides is not None:
-        overrides = dict(ptk_defaults.PROMPT_TOOLKIT_STYLE)
-        overrides.update(json.loads(known.prompt_toolkit_overrides))
-        ptk_defaults.PROMPT_TOOLKIT_STYLE[:] = list(overrides.items())
+    try:
+        app.initialize(args)
 
-    thread.start()
-    app.start()  # type: ignore
+        if known.prompt_toolkit_overrides is not None:
+            overrides = dict(ptk_defaults.PROMPT_TOOLKIT_STYLE)
+            overrides.update(json.loads(known.prompt_toolkit_overrides))
+            ptk_defaults.PROMPT_TOOLKIT_STYLE[:] = list(overrides.items())
+
+        thread.start()
+        app.start()  # type: ignore
+
+    except Exception as e:
+        nvim.exec_lua("vim.notify(..., vim.log.levels.ERROR)", log(str(e)))
 
 
 if __name__ == "__main__":
