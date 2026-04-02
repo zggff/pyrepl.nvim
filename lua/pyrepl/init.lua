@@ -42,7 +42,7 @@ function M.convert_to_python()
     jupytext.convert_to_python(0)
 end
 
----Feed the package installation command for the given tool to the command line.
+---Feed a package installation command for the given tool to the command line.
 ---@param tool string
 function M.install_packages(tool)
     python.install_packages(tool)

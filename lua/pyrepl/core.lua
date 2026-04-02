@@ -163,7 +163,7 @@ local function open_new_repl(args)
     setup_win_autocmds()
 end
 
----Scroll the REPL window to the end so the latest cell is in focus.
+---Scroll REPL window to the end so the latest cell is in focus.
 function M.scroll_repl()
     if state and state.win and vim.api.nvim_win_is_valid(state.win) then
         vim.api.nvim_win_call(state.win, function()
@@ -189,7 +189,7 @@ function M.toggle_repl_focus()
     end
 end
 
----Open the hidden REPL or initialize a new one after prompting for a kernel.
+---Open hidden REPL or initialize a new one after prompting for a kernel.
 ---@param args table|nil
 function M.open_repl(args)
     if state then

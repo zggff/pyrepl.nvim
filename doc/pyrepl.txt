@@ -5,16 +5,22 @@ INTRODUCTION                                                    *pyrepl*
 
 pyrepl.nvim is a Python REPL inside Neovim powered by Jupyter console.
 
+This plugin aims to provide a sensible workflow for working with Python REPL.
+
 Features `pyrepl.nvim` currently provides:
-- Convert notebook files from and to Python with `jupytext`;
-- Install all Jupyter deps required with a Neovim command;
-- Start `jupyter-console` in Neovim built-in terminal;
-- Prompt the user to choose a Jupyter kernel on REPL start;
-- Send code to the REPL from current buffer;
-- Automatically display output images;
-- Neovim theme integration for `jupyter-console`;
-- Jupytext cell navigation;
-- Toggle focus to REPL window in active terminal mode.
+- Hook to convert a notebook to a Python script, command to convert a Python
+  script to a notebook;
+- Command to install required Python packages in a configured Python
+  environment;
+- UI commands to integrate `jupyter-console` in Neovim: open, close, toggle,
+  etc;
+- Commands to send code from Neovim buffers to an open REPL: send visual,
+  configurable block and buffer;
+- Hook to display all images in a Neovim floating window;
+- Console theme integration: syntax, matched brackets, prompt and autocomplete
+  colors;
+- QoL commands: jupytext cell navigation, toggling REPL focus in insert mode
+  for fast testing.
 
 ------------------------------------------------------------------------------
 REQUIREMENTS                                                   *pyrepl-reqs*
@@ -84,17 +90,35 @@ Then install REPL runtime packages with `uv` or `pip` directly from Neovim:
   :PyreplInstall uv
 <
 
+To use jupytext integration, make sure jupytext is available in Neovim:
+>
+  # pipx install jupytext
+  uv tool install jupytext
+<
+
+For Mason users:
+>
+  :MasonInstall jupytext
+<
+
 ==============================================================================
 COMMANDS                                                        *pyrepl-commands*
 
-:PyreplOpen                                                     *PyreplOpen*
-    Open (or show) the REPL. On first run you'll get a prompt to select a
-    Jupyter kernel. The REPL opens in a terminal split.
+:PyreplOpen {args}                                              *PyreplOpen*
+    Select a kernel and open the REPL. Check |pyrepl-tips| for advanced
+    console usage.
+
+    If {args} are given, they are passed directly to `jupyter-console`.
+    This allows advanced use cases such as connecting to an existing or remote
+    kernel.
+
+    Use `:PyreplOpen!` to force the kernel picker and ignore {args}.
 
     Notes:
     - pyrepl.nvim keeps one active REPL session.
     - Closing the REPL via |PyreplClose| shuts down the kernel.
-    - Closing the REPL terminal window hides the window; the kernel stays alive.
+    - Closing the REPL terminal window hides the window; the kernel stays
+      alive.
 
 :PyreplHide                                                     *PyreplHide*
     Hide the REPL window. Keeps the REPL buffer and kernel alive.
@@ -146,10 +170,14 @@ LUA API                                                         *pyrepl-api*
 
 require("pyrepl").setup({opts})                                 *pyrepl.setup*
     Configure pyrepl.nvim and create user commands.
-    Returns the module table.
 
-require("pyrepl").open_repl()                                   *pyrepl.open_repl*
-    Same as |PyreplOpen|. Opens (or shows) the REPL.
+require("pyrepl").open_repl([args])                             *pyrepl.open_repl*
+    Same as |PyreplOpen|. Opens REPL (or shows existing one).
+    Pass [args] as a `vim.system()` style list, for example:
+>
+      require("pyrepl").open_repl({ "--kernel", "python3" })
+<
+    Pass nil to get the same behavior as `:PyreplOpen!`.
 
 require("pyrepl").hide_repl()                                   *pyrepl.hide_repl*
     Same as |PyreplHide|. Hides the REPL window.
@@ -270,14 +298,31 @@ Options:
 ==============================================================================
 TIPS & TRICKS                                                  *pyrepl-tips*
 
+Advanced console usage ~
+
+Pyrepl supports all features of `jupyter-console`, as it is a wrapper around
+it.
+You can pass any flags supported by `jupyter-console` to |PyreplOpen|:
+>
+  :PyreplOpen --existing /path/to/connection/file.json --ssh user@remote \
+    --sshkey ~/.ssh/id_example
+<
+
+From Lua, pass args as a `vim.system()`-style list:
+>
+  require("pyrepl").open_repl({ "--kernel", "python3" })
+<
+
+Use `:PyreplOpen!` to force the local kernel picker and ignore args.
+
 Image display ~
 
-Use `placeholders` provider for ghostty (https://github.com/ghostty-org/ghostty) and kitty (https://github.com/kovidgoyal/kitty) terminals.
-This allows image display in hard cases (for example, when nvim started in nested `ssh`, `tmux` and `docker`).
+Use the `placeholders` provider for ghostty (https://github.com/ghostty-org/ghostty) and kitty (https://github.com/kovidgoyal/kitty) terminals.
+This allows image display in hard cases (for example, when Neovim is started in nested `ssh`, `tmux`, and `docker`).
 
-For other terminals change provider to `image` -
+For other terminals, change the provider to `image` -
 https://github.com/3rd/image.nvim will be used to display images.
-For example, to display images in terminal with `sixel` protocol support:
+For example, to display images in a terminal with `sixel` protocol support:
 >
   vim.pack.add({
     "https://github.com/dangooddd/pyrepl.nvim",
@@ -342,7 +387,7 @@ Combine `send` and `step` commands:
 
 Advanced cell pattern options ~
 
-You can use function in place of `cell_pattern` config option.
+You can use a function in place of `cell_pattern` config option.
 Example with filetype specific patterns:
 >
   require("pyrepl").setup({

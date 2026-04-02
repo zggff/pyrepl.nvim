@@ -9,6 +9,20 @@ Python REPL inside Neovim powered by Jupyter console!
 - Neovim 0.11+
 - Python 3.10+
 
+## Preface
+
+This plugin aims to provide a sensible workflow for working with Python REPL.
+
+Features `pyrepl.nvim` currently provides:
+
+- Hook to convert a notebook to a Python script, command to convert a Python script to a notebook;
+- Command to install required Python packages in a configured Python environment;
+- UI commands to integrate `jupyter-console` in Neovim: open, close, toggle, etc;
+- Commands to send code from Neovim buffers to an open REPL: send visual, configurable block and buffer;
+- Hook to display all images in a Neovim floating window;
+- Console theme integration: syntax, matched brackets, prompt and autocomplete colors;
+- QoL commands: jupytext cell navigation, toggling REPL focus in insert mode for fast testing.
+
 ## Quickstart
 
 Minimal `vim.pack` setup with the default config and example keymaps:
@@ -72,14 +86,14 @@ Then install REPL runtime packages with `uv` or `pip` directly from Neovim:
 :PyreplInstall uv
 ```
 
-To use jupytext integration, make sure jupytext is available in neovim:
+To use jupytext integration, make sure jupytext is available in Neovim:
 
 ```bash
 # pipx install jupytext
 uv tool install jupytext
 ```
 
-For mason users:
+For Mason users:
 
 ```vim
 :MasonInstall jupytext
@@ -89,31 +103,39 @@ For mason users:
 
 https://github.com/user-attachments/assets/fb188ae9-3685-4b66-962a-619c940ba120
 
-## Preface
-
-This plugin aims to provide a sensible workflow to work with Python REPL.
-
-Features `pyrepl.nvim` currently provides:
-
-- Convert notebook files from and to python with `jupytext`;
-- Install all Jupyter deps required with a Neovim command;
-- Start `jupyter-console` in Neovim built-in terminal;
-- Prompt the user to choose Jupyter kernel on REPL start;
-- Send code to the REPL from current buffer;
-- Automatically display output images;
-- Neovim theme integration for `jupyter-console`;
-- Jupytext cell navigation;
-- Toggle focus to REPL window in active terminal mode.
-
 ## Tips & Tricks
+
+### Advanced console usage
+
+Pyrepl supports all features of `jupyter-console`, as it is a wrapper around it.
+You can pass any flags supported by `jupyter-console` to pyrepl with the user command:
+
+```vim
+" PyreplOpen! forcefully prompts you to choose from local kernels, ignoring args
+:PyreplOpen {args}
+```
+
+or from Lua:
+
+```lua
+-- pass nil instead of a table to achieve PyreplOpen! behavior: require("pyrepl").open_repl()
+-- args is a `vim.system`-style list: { "--kernel", "python3" }
+require("pyrepl").open_repl(args)
+```
+
+For example, you can open remote kernel like this:
+
+```vim
+:PyreplOpen --existing /path/to/connection/file.json --ssh user@remote --sshkey ~/.ssh/id_example
+```
 
 ### Image display
 
-Use `placeholders` provider for [ghostty](https://github.com/ghostty-org/ghostty) and [kitty](https://github.com/kovidgoyal/kitty) terminal.
-This allows image display in hard cases (for example, when nvim started in nested `ssh`, `tmux` and `docker`).
+Use `placeholders` provider for [ghostty](https://github.com/ghostty-org/ghostty) and [kitty](https://github.com/kovidgoyal/kitty) terminals.
+This allows image display in hard cases (for example, when Neovim is started in nested `ssh`, `tmux`, and `docker`).
 
-For other terminals change provider to `image` - [image.nvim](https://github.com/3rd/image.nvim) will be used to display images.
-For example, to display images in terminal with `sixel` protocol support:
+For other terminals, change provider to `image` - [image.nvim](https://github.com/3rd/image.nvim) will be used to display images.
+For example, to display images in a terminal with `sixel` protocol support:
 
 ```lua
 vim.pack.add({
@@ -131,10 +153,10 @@ require("pyrepl").setup({ image_provider = "image" })
 
 ### Use a dedicated Python environment for runtime packages
 
-By default pyrepl.nvim uses `python` executable (`python_path = "python"`).
+By default, pyrepl.nvim uses `python` executable (`python_path = "python"`).
 If Neovim is started inside a venv, that venv will be used.
 
-You can also install all required packages once in a dedicated python interpreter and then point to it via `python_path`:
+You can also install all required packages once in a dedicated Python interpreter and then point to it via `python_path`:
 
 ```bash
 uv venv ~/.venv_nvim
@@ -149,7 +171,7 @@ Then, in `init.lua`:
 require("pyrepl").setup({ python_path = "~/.venv_nvim/bin/python" })
 ```
 
-To use arbitrary kernel in that case, you need to install it globally:
+To use an arbitrary kernel in that case, you need to install it globally:
 
 ```bash
 # from kernel virtual environment
@@ -180,7 +202,7 @@ end)
 
 ### Advanced cell pattern options
 
-You can use function in place of `cell_pattern` config option.
+You can use a function in place of `cell_pattern` config option.
 Example with filetype specific patterns:
 
 ```lua
@@ -199,19 +221,19 @@ require("pyrepl").setup({
 
 Commands:
 
-- `:PyreplOpen` - select a kernel and open the REPL;
+- `:PyreplOpen {args}` - select a kernel and open the REPL, check [Tips & Tricks](#advanced-console-usage) for advanced use cases;
 - `:PyreplHide` - hide the REPL window (kernel stays alive);
 - `:PyreplClose` - close the REPL and shut down the kernel;
 - `:PyreplToggle` - toggle REPL between hidden and opened state;
 - `:PyreplToggleFocus` - focus REPL in terminal mode or switch back to previous window;
 - `:PyreplSendVisual` - send the last visual selection;
 - `:PyreplSendBuffer` - send the entire buffer;
-- `:PyreplSendCell` - send cell around the cursor (cells are separated by `cell_pattern`);
+- `:PyreplSendCell` - send the cell around the cursor (cells are separated by `cell_pattern`);
 - `:PyreplStepCellForward` - move cursor to the start of the next cell separated by `cell_pattern`;
 - `:PyreplStepCellBackward` - move cursor to the start of the previous cell separated by `cell_pattern`;
 - `:PyreplOpenImageHistory` - open the image manager; use `j`/`h` for previous, `k`/`l` for next, `dd` to delete, `q` or `<Esc>` to close;
 - `:PyreplExport` - export current buffer to notebook (`jupytext` should be installed);
-- `:PyreplConvert` - prompt to convert current notebook buffer to python (`jupytext` should be installed);
+- `:PyreplConvert` - prompt to convert current notebook buffer to Python (`jupytext` should be installed);
 - `:PyreplInstall {tool}` - install required packages into `python_path` (with `pip` or `uv` tool).
 
 Highlight groups:
@@ -224,7 +246,7 @@ Lua API:
 
 ```lua
 require("pyrepl").setup(opts)
-require("pyrepl").open_repl()
+require("pyrepl").open_repl([args])
 require("pyrepl").hide_repl()
 require("pyrepl").close_repl()
 require("pyrepl").toggle_repl()
@@ -243,5 +265,5 @@ require("pyrepl").install_packages(tool)
 ## Thanks
 
 - [molten.nvim](https://github.com/benlubas/molten-nvim)
-- [pyrola.nvim](https://github.com/robitx/pyrola.nvim)
+- [pyrola.nvim](https://github.com/matarina/pyrola.nvim)
 - [iron.nvim](https://github.com/Vigemus/iron.nvim)

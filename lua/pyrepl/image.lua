@@ -13,7 +13,7 @@ local state = {
     win = nil,
 }
 
----Open a floating window to place the image in.
+---Open a floating window for image display.
 ---Placed in the top-right corner in a vertical layout.
 ---Placed in the bottom-right corner in a horizontal layout.
 ---@param buf integer

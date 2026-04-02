@@ -112,7 +112,7 @@ function M.prompt_kernel(callback)
     end)
 end
 
----Feed the command to install the required packages to the command line.
+---Feed the command to install required packages to the command line.
 ---@param tool string
 function M.install_packages(tool)
     if not tools[tool] then
