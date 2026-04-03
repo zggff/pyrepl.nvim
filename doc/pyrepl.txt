@@ -287,7 +287,7 @@ Options:
   python_path (string)
       Python interpreter used by pyrepl.nvim. Default: "python".
       Resolution order is: `python_path`, then `g:python3_host_prog`, then
-      `python` from PATH.
+      `python3` from PATH.
   preferred_kernel (string)
       Kernel name moved to the first position in the kernel picker.
       Default: "python3".

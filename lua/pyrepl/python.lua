@@ -14,7 +14,7 @@ local console_completions_running
 ---Resolve Python path from the following candidates:
 ---1) config.python_path;
 ---2) vim.g.python3_host_prog;
----3) "python".
+---3) "python3".
 ---@return string
 function M.get_python_path()
     if python_path_cache then
