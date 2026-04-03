@@ -95,6 +95,7 @@ end
 ---@return table
 function M.setup(opts)
     config.update_state(opts)
+    python.load_console_completions(true)
 
     -- define plugin commands
     vim.api.nvim_create_user_command("PyreplOpen", function(o)

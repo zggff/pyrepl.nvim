@@ -8,6 +8,8 @@ local tools = {
 }
 local python_path_cache
 local console_path_cache
+local console_completions_cache
+local console_completions_running
 
 ---Resolve Python path from the following candidates:
 ---1) config.python_path;
@@ -90,6 +92,27 @@ local function list_kernels()
     return kernels
 end
 
+---@param stdout string|nil
+local function parse_console_flags(stdout)
+    local seen = {}
+    local completions = {}
+
+    for line in (stdout or ""):gmatch("[^\r\n]+") do
+        for flag in line:gmatch("%-%-[%w][%w%._-]*") do
+            if not seen[flag] then
+                seen[flag] = true
+                table.insert(completions, flag)
+            end
+        end
+    end
+
+    table.sort(completions, function(a, b)
+        return a > b
+    end)
+
+    return completions
+end
+
 ---Prompt user to choose kernel and call callback with that choice.
 ---@param callback fun(kernel: string)
 function M.prompt_kernel(callback)
@@ -135,31 +158,46 @@ function M.install_packages(tool)
     vim.api.nvim_feedkeys(":!" .. cmd, "n", true)
 end
 
+---@param reload boolean|nil
+function M.load_console_completions(reload)
+    if reload then
+        console_completions_cache = nil
+    end
+
+    if console_completions_cache then
+        return
+    end
+
+    if console_completions_running then
+        return
+    end
+    console_completions_running = true
+
+    pcall(vim.system, {
+        M.get_python_path(),
+        "-m",
+        "jupyter",
+        "console",
+        "--help-all",
+    }, { text = true }, function(result)
+        if result.code == 0 then
+            console_completions_cache = parse_console_flags(result.stdout)
+        end
+        console_completions_running = false
+    end)
+end
+
 ---Get completions for Jupyter Console CLI flags.
 ---@param arglead string
 ---@return string[]
 function M.get_console_completions(arglead)
-    local items = {
-        "-f",
-        "--hb",
-        "--ip",
-        "--kernel",
-        "--existing",
-        "--sshkey",
-        "--ssh",
-        "--control",
-        "--stdin",
-        "--iopub",
-        "--shell",
-        "--transport",
-        "--config",
-        "--debug",
-        "--log-level",
-    }
+    M.load_console_completions()
 
-    return vim.tbl_filter(function(item)
+    local items = vim.tbl_filter(function(item)
         return vim.startswith(item, arglead)
-    end, items)
+    end, console_completions_cache or {})
+
+    return vim.list_extend(items, vim.fn.getcompletion(arglead, "file"))
 end
 
 ---Get completions for tools.
