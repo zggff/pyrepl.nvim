@@ -111,8 +111,8 @@ Pyrepl supports all features of `jupyter-console`, as it is a wrapper around it.
 You can pass any flags supported by `jupyter-console` to pyrepl with the user command:
 
 ```
-" PyreplOpen! forcefully prompts you to choose from local kernels, ignoring args
 :PyreplOpen {args}
+:PyreplOpen! forcefully prompts you to choose from local kernels, ignoring args
 ```
 
 or from Lua:
