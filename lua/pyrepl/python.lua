@@ -194,12 +194,9 @@ end
 ---@return string[]
 function M.get_console_completions(arglead)
     M.load_console_completions()
-
-    local items = vim.tbl_filter(function(item)
+    return vim.tbl_filter(function(item)
         return vim.startswith(item, arglead)
     end, console_completions_cache or {})
-
-    return vim.list_extend(items, vim.fn.getcompletion(arglead, "file"))
 end
 
 ---Get completions for tools.

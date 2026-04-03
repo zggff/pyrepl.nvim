@@ -161,6 +161,7 @@ local function open_new_repl(args)
 
     setup_buf_autocmds()
     setup_win_autocmds()
+    M.scroll_repl()
 end
 
 ---Scroll REPL window to the end so the latest cell is in focus.
