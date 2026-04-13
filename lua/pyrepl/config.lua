@@ -11,6 +11,7 @@ local defaults = {
     image_height_ratio = 0.5,
     image_provider = "placeholders",
     cell_pattern = "^# %%%%.*$",
+    cell_pattern_end = nil,
     python_path = "python",
     preferred_kernel = "python3",
     jupytext_hook = true,
@@ -67,15 +68,19 @@ function M.get_state()
 end
 
 ---Get the effective cell pattern for the current buffer.
----@return string
+---@return pyrepl.Pattern
 function M.get_cell_pattern()
     local pattern = state.cell_pattern
+    local pattern_end = state.cell_pattern_end
 
     if type(pattern) == "function" then
-        return pattern()
+        pattern = pattern()
+    end
+    if type(pattern_end) == "function" then
+        pattern_end = pattern_end()
     end
 
-    return pattern
+    return { pat_start = pattern, pat_end = pattern_end or pattern }
 end
 
 ---@param opts? pyrepl.ConfigOpts

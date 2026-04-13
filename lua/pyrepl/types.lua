@@ -11,6 +11,7 @@
 ---@field image_height_ratio number
 ---@field image_provider string
 ---@field cell_pattern string|fun(): string
+---@field cell_pattern_end? string|fun(): string
 ---@field python_path string|nil
 ---@field preferred_kernel string|nil
 ---@field jupytext_hook boolean
@@ -50,3 +51,7 @@
 ---@field idx integer
 ---@field buf integer|nil
 ---@field win integer|nil
+
+---@class pyrepl.Pattern
+---@field pat_start string 
+---@field pat_end string 

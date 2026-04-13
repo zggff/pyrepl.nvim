@@ -145,7 +145,7 @@ end
 
 ---@param buf integer
 ---@param idx integer
----@param cell_pattern string
+---@param cell_pattern pyrepl.Pattern
 ---@return integer|nil
 ---@return integer|nil
 local function get_cell_range(buf, idx, cell_pattern)
@@ -157,7 +157,7 @@ local function get_cell_range(buf, idx, cell_pattern)
     -- block start
     local start_idx = 1
     for i = idx, 1, -1 do
-        if lines[i]:match(cell_pattern) then
+        if lines[i]:match(cell_pattern.pat_start) then
             start_idx = i + 1
             break
         end
@@ -166,7 +166,7 @@ local function get_cell_range(buf, idx, cell_pattern)
     -- block end
     local end_idx = #lines
     for i = idx + 1, #lines do
-        if lines[i]:match(cell_pattern) then
+        if lines[i]:match(cell_pattern.pat_end) then
             end_idx = i - 1
             break
         end
@@ -201,7 +201,7 @@ end
 ---@param buf integer
 ---@param chan integer
 ---@param idx integer
----@param cell_pattern string
+---@param cell_pattern pyrepl.Pattern
 function M.send_cell(buf, chan, idx, cell_pattern)
     local start_idx, end_idx = get_cell_range(buf, idx, cell_pattern)
 
@@ -232,7 +232,7 @@ function M.step_cell_backward(win)
     local line = vim.api.nvim_buf_get_lines(buf, idx - 1, idx, false)[1]
     local cell_pattern = config.get_cell_pattern()
 
-    if line:match(cell_pattern) then
+    if line:match(cell_pattern.pat_start) then
         idx = math.max(1, idx - 1)
     end
 
