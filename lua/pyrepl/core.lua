@@ -166,11 +166,12 @@ end
 
 ---Scroll REPL window to the end so the latest cell is in focus.
 function M.scroll_repl()
-    if state and state.win and vim.api.nvim_win_is_valid(state.win) then
-        vim.api.nvim_win_call(state.win, function()
-            vim.cmd.normal({ "G", bang = true })
-        end)
+    if not (state and state.win and vim.api.nvim_win_is_valid(state.win)) then
+        return
     end
+
+    local nl = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(state.win))
+    vim.api.nvim_win_set_cursor(state.win, { nl, 0 })
 end
 
 ---Toggle REPL terminal focus.
