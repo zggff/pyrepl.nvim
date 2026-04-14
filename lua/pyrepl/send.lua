@@ -216,11 +216,24 @@ end
 function M.step_cell_forward(win)
     local buf = vim.api.nvim_win_get_buf(win)
     local idx = vim.api.nvim_win_get_cursor(win)[1]
-    local _, end_idx = get_cell_range(buf, idx, config.get_cell_pattern())
+    local cell_pattern = config.get_cell_pattern()
+    local _, end_idx = get_cell_range(buf, idx, cell_pattern)
 
-    if end_idx then
+    -- not in a cell
+    if not end_idx then
+        return
+    end
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local target = nil
+    for i = end_idx + 1, #lines do
+        if lines[i]:match(cell_pattern.pat_start) then
+            target, _ = get_cell_range(buf, i, cell_pattern)
+            break
+        end
+    end
+    if target then
         vim.api.nvim_win_call(win, function()
-            vim.cmd.normal({ tostring(end_idx + 1) .. "gg^", bang = true })
+            vim.cmd.normal({ tostring(target) .. "gg^", bang = true })
         end)
     end
 end
@@ -229,20 +242,28 @@ end
 function M.step_cell_backward(win)
     local buf = vim.api.nvim_win_get_buf(win)
     local idx = vim.api.nvim_win_get_cursor(win)[1]
-    local line = vim.api.nvim_buf_get_lines(buf, idx - 1, idx, false)[1]
     local cell_pattern = config.get_cell_pattern()
 
-    if line:match(cell_pattern.pat_start) then
-        idx = math.max(1, idx - 1)
+    local start_idx, _ = get_cell_range(buf, idx, cell_pattern)
+    if not start_idx then
+        return
     end
 
-    local start_idx, _ = get_cell_range(buf, idx, cell_pattern)
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, start_idx, false)
+    local target = nil
+    for i = start_idx - 2, 0, -1 do
+        if lines[i]:match(cell_pattern.pat_end) then
+            target, _ = get_cell_range(buf, i, cell_pattern)
+            break
+        end
+    end
 
-    if start_idx then
+    if target then
         vim.api.nvim_win_call(win, function()
-            vim.cmd.normal({ tostring(math.max(0, start_idx - 1)) .. "gg^", bang = true })
+            vim.cmd.normal({ tostring(math.max(0, target)) .. "gg^", bang = true })
         end)
     end
 end
 
 return M
+
