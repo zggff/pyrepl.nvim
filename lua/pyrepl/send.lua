@@ -251,7 +251,7 @@ function M.step_cell_backward(win)
 
     local lines = vim.api.nvim_buf_get_lines(buf, 0, start_idx, false)
     local target = nil
-    for i = start_idx - 2, 0, -1 do
+    for i = start_idx - 2, 1, -1 do
         if lines[i]:match(cell_pattern.pat_end) then
             target, _ = get_cell_range(buf, i, cell_pattern)
             break
