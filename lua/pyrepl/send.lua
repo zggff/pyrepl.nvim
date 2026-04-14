@@ -144,6 +144,24 @@ local function get_visual_range(buf)
 end
 
 ---@param buf integer
+---@param cell_pattern pyrepl.Pattern
+---@return {from: integer, to: integer}[]
+local function get_cells(buf, cell_pattern)
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local res = {}
+    local start = nil
+    for i = 1, #lines do
+        if not start and lines[i]:match(cell_pattern.pat_start) then
+            start = i
+        elseif start and lines[i]:match(cell_pattern.pat_end) then
+            table.insert(res, { from = start, to = i })
+            start = nil
+        end
+    end
+    return res
+end
+
+---@param buf integer
 ---@param idx integer
 ---@param cell_pattern pyrepl.Pattern
 ---@return integer|nil
@@ -207,6 +225,34 @@ function M.send_cell(buf, chan, idx, cell_pattern)
 
     if start_idx and end_idx then
         local lines = vim.api.nvim_buf_get_lines(buf, start_idx - 1, end_idx, false)
+        local msg = table.concat(lines, "\n")
+        raw_send_message(chan, msg)
+    end
+end
+
+---@param buf integer
+---@param chan integer
+---@param cell_pattern pyrepl.Pattern
+function M.send_cells_all(buf, chan, cell_pattern)
+    local cells = get_cells(buf, cell_pattern)
+    for _, cell in ipairs(cells) do
+        local lines = vim.api.nvim_buf_get_lines(buf, cell.from, cell.to - 1, false)
+        local msg = table.concat(lines, "\n")
+        raw_send_message(chan, msg)
+    end
+end
+
+---@param buf integer
+---@param chan integer
+---@param idx integer
+---@param cell_pattern pyrepl.Pattern
+function M.send_cells_before_current(buf, chan, idx, cell_pattern)
+    local cells = get_cells(buf, cell_pattern)
+    for _, cell in ipairs(cells) do
+        if cell.from > idx then
+            break
+        end
+        local lines = vim.api.nvim_buf_get_lines(buf, cell.from, cell.to - 1, false)
         local msg = table.concat(lines, "\n")
         raw_send_message(chan, msg)
     end

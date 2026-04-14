@@ -83,6 +83,23 @@ function M.send_cell()
     end
 end
 
+function M.send_cells_all()
+    local chan = core.get_chan()
+    if chan then
+        send.send_cells_all(0, chan, config.get_cell_pattern())
+        core.scroll_repl()
+    end
+end
+
+function M.send_cells_before_current()
+    local chan = core.get_chan()
+    if chan then
+        local idx = vim.api.nvim_win_get_cursor(0)[1]
+        send.send_cells_before_current(0, chan, idx, config.get_cell_pattern())
+        core.scroll_repl()
+    end
+end
+
 function M.step_cell_forward()
     send.step_cell_forward(0)
 end
@@ -136,6 +153,14 @@ function M.setup(opts)
 
     vim.api.nvim_create_user_command("PyreplSendCell", function()
         M.send_cell()
+    end, { nargs = 0 })
+
+    vim.api.nvim_create_user_command("PyreplSendCellsAll", function()
+        M.send_cells_all()
+    end, { nargs = 0 })
+
+    vim.api.nvim_create_user_command("PyreplSendCellsBeforeCurrent", function()
+        M.send_cells_before_current()
     end, { nargs = 0 })
 
     vim.api.nvim_create_user_command("PyreplStepCellBackward", function()
