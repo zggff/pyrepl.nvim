@@ -151,12 +151,18 @@ local function get_cells(buf, cell_pattern)
     local res = {}
     local start = nil
     for i = 1, #lines do
-        if not start and lines[i]:match(cell_pattern.pat_start) then
-            start = i
-        elseif start and lines[i]:match(cell_pattern.pat_end) then
+        if start and lines[i]:match(cell_pattern.pat_end) then
             table.insert(res, { from = start, to = i })
             start = nil
         end
+        if not start and lines[i]:match(cell_pattern.pat_start) then
+            start = i
+        end
+    end
+
+    -- to mimic the behavior of get_cell_range
+    if start then
+        table.insert(res, { from = start, to = -1 })
     end
     return res
 end
