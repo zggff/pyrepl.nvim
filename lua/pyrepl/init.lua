@@ -115,73 +115,78 @@ function M.setup(opts)
     python.load_console_completions(true)
 
     -- define plugin commands
-    vim.api.nvim_create_user_command("PyreplOpen", function(o)
-        if o.bang then
-            M.open_repl()
-        else
-            M.open_repl(o.fargs)
+    local subcommands = {
+        open = {
+            fn = function(c_opts, args)
+                if c_opts.bang then
+                    M.open_repl()
+                else
+                    M.open_repl(args)
+                end
+            end,
+            complete = function(arg)
+                return python.get_console_completions(arg)
+            end,
+        },
+
+        hide = { fn = M.hide_repl },
+        close = { fn = M.close_repl },
+        toggle = { fn = M.toggle_repl },
+        toggleFocus = { fn = M.toggle_repl_focus },
+        openImageHistory = { fn = M.open_image_history },
+
+        sendVisual = { fn = M.send_visual, range = true },
+        sendBuffer = { fn = M.send_buffer },
+        sendCell = { fn = M.send_cell },
+        sendCellsAll = { fn = M.send_cells_all },
+        sendCellsBeforeCurrent = { fn = M.send_cells_before_current },
+
+        stepCellBackward = { fn = M.step_cell_backward },
+        stepCellForward = { fn = M.step_cell_forward },
+
+        export = { fn = M.export_to_notebook },
+        convert = { fn = M.convert_to_python },
+
+        install = {
+            fn = function(_, args)
+                M.install_packages(args[1])
+            end,
+            complete = function(arg)
+                return python.get_tool_completions(arg)
+            end,
+        },
+    }
+
+    vim.api.nvim_create_user_command("Pyrepl", function(c_opts)
+        local name = c_opts.fargs[1]
+        local cmd = subcommands[name]
+
+        if not cmd then
+            vim.notify("Invalid Pyrepl subcommand: " .. tostring(name))
+            return
         end
-    end, { nargs = "*", bang = true, complete = python.get_console_completions })
 
-    vim.api.nvim_create_user_command("PyreplHide", function()
-        M.hide_repl()
-    end, { nargs = 0 })
+        local args = { unpack(c_opts.fargs, 2) }
+        cmd.fn(opts, args)
+    end, {
+        nargs = "+",
+        bang = true,
+        range = true,
 
-    vim.api.nvim_create_user_command("PyreplClose", function()
-        M.close_repl()
-    end, { nargs = 0 })
+        complete = function(arg, line)
+            local parts = vim.split(line, "%s+")
+            local sub = parts[2]
 
-    vim.api.nvim_create_user_command("PyreplToggle", function()
-        M.toggle_repl()
-    end, { nargs = 0 })
+            if #parts <= 2 then
+                return vim.tbl_keys(subcommands)
+            end
 
-    vim.api.nvim_create_user_command("PyreplToggleFocus", function()
-        M.toggle_repl_focus()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplOpenImageHistory", function()
-        M.open_image_history()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplSendVisual", function()
-        M.send_visual()
-    end, { nargs = 0, range = true })
-
-    vim.api.nvim_create_user_command("PyreplSendBuffer", function()
-        M.send_buffer()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplSendCell", function()
-        M.send_cell()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplSendCellsAll", function()
-        M.send_cells_all()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplSendCellsBeforeCurrent", function()
-        M.send_cells_before_current()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplStepCellBackward", function()
-        M.step_cell_backward()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplStepCellForward", function()
-        M.step_cell_forward()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplExport", function()
-        M.export_to_notebook()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplConvert", function()
-        M.convert_to_python()
-    end, { nargs = 0 })
-
-    vim.api.nvim_create_user_command("PyreplInstall", function(o)
-        M.install_packages(o.args)
-    end, { nargs = 1, complete = python.get_tool_completions })
+            local cmd = subcommands[sub]
+            if cmd and cmd.complete then
+                return cmd.complete(arg)
+            end
+        end,
+    })
 
     -- define default highlight groups
     local hl_links = {
